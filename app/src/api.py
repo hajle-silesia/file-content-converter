@@ -1,12 +1,18 @@
+import os
+
 from fastapi import FastAPI
-from file_content_converter import FileContentMonitor
+
+from file_content_converter import FileContentConverter
 
 
 api = FastAPI()
-file_content_monitor = FileContentMonitor("./file_content_monitor/recipe.txt")
+host = os.getenv('FILE_CONTENT_MONITOR_SERVICE_HOST')
+port = os.getenv('FILE_CONTENT_MONITOR_SERVICE_PORT')
+url = f"http://{host}:{port}/content"
+file_content_converter = FileContentConverter(url)
 
 
 @api.get("/content")
 async def content():
-    return {"content": file_content_monitor.content,
+    return {"content": file_content_converter.content,
             }
