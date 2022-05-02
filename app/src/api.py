@@ -1,4 +1,5 @@
 import os
+import base64
 
 from fastapi import FastAPI
 
@@ -14,5 +15,5 @@ file_content_converter = FileContentConverter(url)
 
 @api.get("/content")
 async def content():
-    return {"content": file_content_converter.content,
+    return {"content": base64.b64encode(file_content_converter.content.encode()),
             }
