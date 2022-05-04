@@ -1,15 +1,16 @@
 import unittest
 from unittest import mock
 from time import sleep
+import base64
 
 from app.src.file_content_converter import FileContentConverter
-
 
 unavailable_content = {'url': "http://unavailable/content", 'content': None}
 unavailable_to_empty_content = {'url': "http://unavailable_to_empty/content", 'counter': 0}
 empty_content = {'url': "http://empty/content", 'content': {}}
 empty_to_nonempty_content = {'url': "http://empty_to_non-empty/content", 'counter': 0}
-nonempty_content = {'url': "http://non-empty/content", 'content': {'test_key': "test_value"}}
+nonempty_content = {'url': "http://non-empty/content",
+                    'content': base64.b64encode(str({'test_key': "test_value"}).encode())}
 nonempty_to_empty_content = {'url': "http://non-empty_to_empty/content", 'counter': 0}
 nonempty_to_unavailable_content = {'url': "http://non-empty_to_unavailable/content", 'counter': 0}
 
@@ -99,14 +100,14 @@ class TestFileContentConverter(unittest.TestCase):
 
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(nonempty_content['content'], self.file_content_converter.content)
+        self.assertEqual(base64.b64decode(nonempty_content['content']), self.file_content_converter.content)
 
     def test_Should_GetDictContent_When_RawContentIsNotEmptyDict(self, mock_get):
         self.file_content_converter = FileContentConverter(nonempty_content['url'])
 
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(nonempty_content['content'], self.file_content_converter.content)
+        self.assertEqual(base64.b64decode(nonempty_content['content']), self.file_content_converter.content)
 
     def test_Should_GetEmptyDict_When_RawContentBecomesEmptyDict(self, mock_get):
         self.file_content_converter = FileContentConverter(nonempty_to_empty_content['url'])
