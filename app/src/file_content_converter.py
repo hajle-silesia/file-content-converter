@@ -1,6 +1,7 @@
 import threading
 from time import sleep
 import base64
+import json
 
 import requests
 
@@ -47,7 +48,7 @@ class FileContentConverter(threading.Thread):
 
     def __extract_new_raw_content(self):
         if self.__response.status_code == 200:
-            self.__new_raw_content = base64.b64decode(self.__response.json()['content']).decode()
+            self.__new_raw_content = json.loads(base64.b64decode(self.__response.json()['content']).decode())
         else:
             self.__new_raw_content = None
 

@@ -101,7 +101,7 @@ class TestFileContentConverter(unittest.TestCase):
 
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(base64.b64decode(nonempty_content['content']).decode(), self.file_content_converter.content)
+        self.assertEqual(json.loads(base64.b64decode(nonempty_content['content']).decode()), self.file_content_converter.content)
 
     def test_Should_GetDictContent_When_RawContentIsNotEmptyDict(self, mock_get):
         self.file_content_converter = FileContentConverter(nonempty_content['url'])
