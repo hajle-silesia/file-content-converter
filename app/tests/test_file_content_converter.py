@@ -2,6 +2,7 @@ import unittest
 from unittest import mock
 from time import sleep
 import base64
+import json
 
 from app.src.file_content_converter import FileContentConverter
 
@@ -10,7 +11,7 @@ unavailable_to_empty_content = {'url': "http://unavailable_to_empty/content", 'c
 empty_content = {'url': "http://empty/content", 'content': {}}
 empty_to_nonempty_content = {'url': "http://empty_to_non-empty/content", 'counter': 0}
 nonempty_content = {'url': "http://non-empty/content",
-                    'content': base64.b64encode(str({'test_key': "test_value"}).encode())}
+                    'content': base64.b64encode(json.dumps({'test_key': "test_value"}).encode())}
 nonempty_to_empty_content = {'url': "http://non-empty_to_empty/content", 'counter': 0}
 nonempty_to_unavailable_content = {'url': "http://non-empty_to_unavailable/content", 'counter': 0}
 
@@ -128,7 +129,3 @@ def wait_monitoring_interval_time_with_buffer():
     monitoring_interval_time = 5
     buffer = 1
     sleep(monitoring_interval_time + buffer)
-
-
-if __name__ == "__main__":
-    unittest.main()
