@@ -6,7 +6,7 @@ import json
 import requests
 
 
-class FileContentConverter(threading.Thread):
+class FileContentProcessor(threading.Thread):
     def __init__(self, url):
         threading.Thread.__init__(self, daemon=True)
 
@@ -30,7 +30,7 @@ class FileContentConverter(threading.Thread):
     def __monitor_raw_content(self):
         if self.__raw_content_changed():
             self.__update_raw_content()
-            self.__convert_raw_content()
+            self.__process_raw_content()
 
         self.__wait_time_interval()
 
@@ -55,7 +55,7 @@ class FileContentConverter(threading.Thread):
     def __update_raw_content(self):
         self.__raw_content = self.__new_raw_content
 
-    def __convert_raw_content(self):
+    def __process_raw_content(self):
         if self.__raw_content:
             self.__content = self.__raw_content
         else:
