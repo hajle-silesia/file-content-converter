@@ -30,7 +30,7 @@ class TestConverter(unittest.TestCase):
 
         self.assertEqual({}, self.xml_converter.content)
 
-    def test_Should_GetEmptyContent_When_RawContentIsNotEmpty(self):
+    def test_Should_GetDictContent_When_RawContentIsNotEmpty(self):
         expected_content = {'note': {'to': "Smith",
                                      'from': "Adams",
                                      'heading': "Test",
