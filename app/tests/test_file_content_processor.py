@@ -2,18 +2,22 @@ import unittest
 from unittest import mock
 from time import sleep
 import base64
-import json
 
 from app.src.file_content_processor import FileContentProcessor
 
-unavailable_content = {'url': "http://unavailable/content", 'content': None}
-unavailable_to_empty_content = {'url': "http://unavailable_to_empty/content", 'counter': 0}
-empty_content = {'url': "http://empty/content", 'content': {}}
-empty_to_nonempty_content = {'url': "http://empty_to_non-empty/content", 'counter': 0}
-nonempty_content = {'url': "http://non-empty/content",
-                    'content': base64.b64encode(json.dumps({'test_key': "test_value"}).encode())}
-nonempty_to_empty_content = {'url': "http://non-empty_to_empty/content", 'counter': 0}
-nonempty_to_unavailable_content = {'url': "http://non-empty_to_unavailable/content", 'counter': 0}
+with open("./files/converter.xml", encoding="utf-8") as file:
+    xml_content = file.read()
+
+empty_response = {'url': "http://empty/content", 'content': ""}
+header_only_response = {'url': "http://header-only/content", 'content': "<?xml version='1.0' encoding='UTF-8'?>"}
+nonempty_response = {'url': "http://nonempty/content", 'content': xml_content}
+
+responses = [empty_response,
+             header_only_response,
+             nonempty_response,
+             ]
+for response in responses:
+    response['content_encoded'] = base64.b64encode(response['content'].encode())
 
 
 def mocked_requests_get(*args, **kwargs):
@@ -25,104 +29,107 @@ def mocked_requests_get(*args, **kwargs):
         def json(self):
             return self.json_data
 
-    if args[0] == unavailable_content['url']:
-        return MockResponse({'content': unavailable_content['content']}, 404)
-    elif args[0] == unavailable_to_empty_content['url']:
-        if unavailable_to_empty_content['counter'] == 0:
-            unavailable_to_empty_content['counter'] += 1
-            return MockResponse({'content': unavailable_content['content']}, 404)
-        else:
-            return MockResponse({'content': empty_content['content']}, 204)
-    elif args[0] == empty_content['url']:
-        return MockResponse({'content': empty_content['content']}, 204)
-    elif args[0] == empty_to_nonempty_content['url']:
-        if empty_to_nonempty_content['counter'] == 0:
-            empty_to_nonempty_content['counter'] += 1
-            return MockResponse({'content': empty_content['content']}, 204)
-        else:
-            return MockResponse({'content': nonempty_content['content']}, 200)
-    elif args[0] == nonempty_content['url']:
-        return MockResponse({'content': nonempty_content['content']}, 200)
-    elif args[0] == nonempty_to_empty_content['url']:
-        if nonempty_to_empty_content['counter'] == 0:
-            nonempty_to_empty_content['counter'] += 1
-            return MockResponse({'content': nonempty_content['content']}, 200)
-        else:
-            return MockResponse({'content': empty_content['content']}, 204)
-    elif args[0] == nonempty_to_unavailable_content['url']:
-        if nonempty_to_unavailable_content['counter'] == 0:
-            nonempty_to_unavailable_content['counter'] += 1
-            return MockResponse({'content': nonempty_content['content']}, 200)
-        else:
-            return MockResponse({}, 404)
+    if args[0] == empty_response['url']:
+        return MockResponse({'content': empty_response['content_encoded']}, 204)
+    elif args[0] == header_only_response['url']:
+        return MockResponse({'content': header_only_response['content_encoded']}, 204)
+    elif args[0] == nonempty_response['url']:
+        return MockResponse({'content': nonempty_response['content_encoded']}, 200)
     else:
         return MockResponse(None, 404)
 
 
 @mock.patch('app.src.file_content_processor.requests.get', side_effect=mocked_requests_get)
 class TestFileContentConverter(unittest.TestCase):
-    def setUp(self):
-        self.set_test_arguments()
-        self.set_tested_objects()
-        self.set_test_expected_results()
+    @classmethod
+    def setUpClass(cls):
+        cls.set_test_arguments()
+        cls.set_tested_objects()
+        cls.set_expected_results()
 
-    def set_test_arguments(self):
+    @classmethod
+    def set_test_arguments(cls):
         pass
 
-    def set_tested_objects(self):
+    @classmethod
+    def set_tested_objects(cls):
         pass
 
-    def set_test_expected_results(self):
-        pass
+    @classmethod
+    def set_expected_results(cls):
+        cls.expected_empty_content = {}
+        cls.expected_nonempty_content = {'note': {'to': "Smith",
+                                                  'from': "Adams",
+                                                  'heading': "Test",
+                                                  'body': "Test body",
+                                                  },
+                                         }
 
-    def test_Should_GetEmptyDict_When_RawContentIsNotAvailable(self, mock_get):
-        self.file_content_converter = FileContentProcessor(unavailable_content['url'])
-
+    def test_Should_GetEmptyContent_When_GivenEmptyRawContent(self, mock_get):
+        self.file_content_processor = FileContentProcessor(empty_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual({}, self.file_content_converter.content)
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
-    def test_Should_GetEmptyDict_When_NotAvailableRawContentBecomesAvailableAndIsEmptyDict(self, mock_get):
-        self.file_content_converter = FileContentProcessor(unavailable_to_empty_content['url'])
-
+    def test_Should_GetEmptyContent_When_GivenHeaderOnlyContent(self, mock_get):
+        self.file_content_processor = FileContentProcessor(header_only_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual({}, self.file_content_converter.content)
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
-    def test_Should_GetEmptyDict_When_RawContentIsEmptyDict(self, mock_get):
-        self.file_content_converter = FileContentProcessor(empty_content['url'])
-
+    def test_Should_GetNonemptyContent_When_GivenNonemptyRawContent(self, mock_get):
+        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(empty_content['content'], self.file_content_converter.content)
+        self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
-    def test_Should_GetDictContent_When_EmptyDictRawContentIsUpdated(self, mock_get):
-        self.file_content_converter = FileContentProcessor(empty_to_nonempty_content['url'])
-
+    def test_Should_GetEmptyContent_When_GivenEmptyRawContentBecomesHeaderOnly(self, mock_get):
+        self.file_content_processor = FileContentProcessor(empty_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = header_only_response['url']
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(json.loads(base64.b64decode(nonempty_content['content']).decode()), self.file_content_converter.content)
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
-    def test_Should_GetDictContent_When_RawContentIsNotEmptyDict(self, mock_get):
-        self.file_content_converter = FileContentProcessor(nonempty_content['url'])
-
+    def test_Should_GetNonemptyContent_When_GivenHeaderOnlyRawContentBecomesNonempty(self, mock_get):
+        self.file_content_processor = FileContentProcessor(header_only_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = nonempty_response['url']
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(json.loads(base64.b64decode(nonempty_content['content']).decode()), self.file_content_converter.content)
+        self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
-    def test_Should_GetEmptyDict_When_RawContentBecomesEmptyDict(self, mock_get):
-        self.file_content_converter = FileContentProcessor(nonempty_to_empty_content['url'])
-
+    def test_Should_GetNonemptyContent_When_GivenEmptyRawContentBecomesNonempty(self, mock_get):
+        self.file_content_processor = FileContentProcessor(empty_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = nonempty_response['url']
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual(empty_content['content'], self.file_content_converter.content)
+        self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
-    def test_Should_GetEmptyDict_When_RawContentBecomesNotAvailable(self, mock_get):
-        self.file_content_converter = FileContentProcessor(nonempty_to_unavailable_content['url'])
-
+    def test_Should_GetEmptyContent_When_GivenNonemptyRawContentBecomesHeaderOnly(self, mock_get):
+        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = header_only_response['url']
         wait_monitoring_interval_time_with_buffer()
 
-        self.assertEqual({}, self.file_content_converter.content)
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
+
+    def test_Should_GetEmptyContent_When_GivenHeaderOnlyRawContentBecomesEmpty(self, mock_get):
+        self.file_content_processor = FileContentProcessor(header_only_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = empty_response['url']
+        wait_monitoring_interval_time_with_buffer()
+
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
+
+    def test_Should_GetEmptyContent_When_GivenNonemptyRawContentBecomesEmpty(self, mock_get):
+        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
+        wait_monitoring_interval_time_with_buffer()
+        self.file_content_processor.url = empty_response['url']
+        wait_monitoring_interval_time_with_buffer()
+
+        self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
 
 def wait_monitoring_interval_time_with_buffer():

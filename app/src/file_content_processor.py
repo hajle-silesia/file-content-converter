@@ -1,12 +1,16 @@
 import threading
 from time import sleep
 import base64
-import json
+import magic
 
 import requests
 
+from app.src.converter import factory
+
 
 class FileContentProcessor(threading.Thread):
+    _content_default = {}
+
     def __init__(self, url):
         threading.Thread.__init__(self, daemon=True)
 
@@ -15,13 +19,21 @@ class FileContentProcessor(threading.Thread):
 
         self.__response = None
         self.__raw_content = ""
-        self.__content = {}
+        self.__content = self._content_default
 
         self. start()
 
     @property
     def content(self):
         return self.__content
+
+    @property
+    def url(self):
+        return self.__url
+
+    @url.setter
+    def url(self, url):
+        self.__url = url
 
     def run(self):
         while True:
@@ -48,7 +60,7 @@ class FileContentProcessor(threading.Thread):
 
     def __extract_new_raw_content(self):
         if self.__response.status_code == 200:
-            self.__new_raw_content = json.loads(base64.b64decode(self.__response.json()['content']).decode())
+            self.__new_raw_content = base64.b64decode(self.__response.json()['content']).decode()
         else:
             self.__new_raw_content = None
 
@@ -57,9 +69,22 @@ class FileContentProcessor(threading.Thread):
 
     def __process_raw_content(self):
         if self.__raw_content:
-            self.__content = self.__raw_content
+            # file_type = self.__get_file_type()
+            # converter = self.__factory.create(file_type)
+            # converter.process()
+            file_type_header = magic.from_buffer(self.__raw_content.encode())
+
+            for file_type in factory.builders:
+                if file_type in file_type_header.casefold():
+                    break
+            try:
+                converter = factory.create(file_type)
+            except ValueError:
+                print(f"File type {file_type} not supported")
+            converter.process(self.__raw_content)
+            self.__content = converter.content
         else:
-            self.__content = {}
+            self.__content = self._content_default
 
     def __wait_time_interval(self):
         sleep(self.__monitoring_interval_time)
