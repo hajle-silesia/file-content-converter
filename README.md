@@ -4,4 +4,4 @@ This repository is responsible for:
  
 ### Installation
 Setup:
-- replace <your-BeerSmith-installation-dir>/Reports/Recipe.xml with [Recipe.xml](Recipe.xml)
+- copy Reports directory content into <your-BeerSmith-installation-dir>/Reports and replace files
