@@ -1,8 +1,8 @@
+import base64
 import threading
 from time import sleep
-import base64
-import magic
 
+import magic
 import requests
 
 from app.src.converter import factory
@@ -62,29 +62,29 @@ class FileContentProcessor(threading.Thread):
         if self.__response.status_code == 200:
             self.__new_raw_content = base64.b64decode(self.__response.json()['content']).decode()
         else:
-            self.__new_raw_content = None
+            self.__new_raw_content = ""
 
     def __update_raw_content(self):
         self.__raw_content = self.__new_raw_content
 
     def __process_raw_content(self):
         if self.__raw_content:
-            # file_type = self.__get_file_type()
-            # converter = self.__factory.create(file_type)
-            # converter.process()
-            file_type_header = magic.from_buffer(self.__raw_content.encode())
+            file_type_header = self.__get_file_type_header()
+            converter = self.__create_converter(file_type_header)
 
-            for file_type in factory.builders:
-                if file_type in file_type_header.casefold():
-                    break
-            try:
-                converter = factory.create(file_type)
-            except ValueError:
-                print(f"File type {file_type} not supported")
-            converter.process(self.__raw_content)
-            self.__content = converter.content
+            if converter:
+                converter.process(self.__raw_content)
+                self.__content = converter.content
         else:
             self.__content = self._content_default
+
+    def __get_file_type_header(self):
+        return magic.from_buffer(self.__raw_content.encode())
+
+    def __create_converter(self, file_type_header):
+        for file_type in factory.builders:
+            if file_type in file_type_header.casefold():
+                return factory.create(file_type)
 
     def __wait_time_interval(self):
         sleep(self.__monitoring_interval_time)
