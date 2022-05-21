@@ -1,11 +1,12 @@
-import unittest
-from unittest import mock
-from time import sleep
 import base64
+import unittest
+from pathlib import Path
+from time import sleep
+from unittest import mock
 
 from app.src.file_content_processor import FileContentProcessor
 
-with open("./files/converter.xml", encoding="utf-8") as file:
+with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
     xml_content = file.read()
 
 empty_response = {'url': "http://empty/content", 'content': ""}
