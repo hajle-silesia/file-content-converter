@@ -4,14 +4,14 @@ import json
 
 from fastapi import FastAPI
 
-from file_content_converter import FileContentConverter
+from file_content_processor import FileContentProcessor
 
 
 api = FastAPI()
 host = os.getenv('FILE_CONTENT_MONITOR_SERVICE_HOST')
 port = os.getenv('FILE_CONTENT_MONITOR_SERVICE_PORT')
 url = f"http://{host}:{port}/content"
-file_content_converter = FileContentConverter(url)
+file_content_converter = FileContentProcessor(url)
 
 
 @api.get("/content")
