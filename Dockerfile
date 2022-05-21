@@ -5,4 +5,5 @@ WORKDIR app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY ./app/src .
+ENV PYTHONPATH /app
 ENTRYPOINT ["python", "main.py"]
