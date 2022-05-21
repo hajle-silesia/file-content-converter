@@ -1,6 +1,6 @@
 ### About
 This repository is responsible for:
-- converting BeerSmith XML recipe to dict, used further by application
+- converting BeerSmith XML recipe to dict
  
 ### Installation
 Setup:
