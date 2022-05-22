@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 from unittest import mock
 
-from src.file_content_processor import FileContentProcessor
+from src.file_content_converter import FileContentConverter
 
 with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
     xml_content = file.read()
@@ -40,7 +40,7 @@ def mocked_requests_get(*args, **kwargs):
         return MockResponse(None, 404)
 
 
-@mock.patch('src.file_content_processor.requests.get', side_effect=mocked_requests_get)
+@mock.patch('src.file_content_converter.requests.get', side_effect=mocked_requests_get)
 class TestFileContentConverter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -67,25 +67,25 @@ class TestFileContentConverter(unittest.TestCase):
                                          }
 
     def test_Should_GetEmptyContent_When_GivenEmptyRawContent(self, mock_get):
-        self.file_content_processor = FileContentProcessor(empty_response['url'])
+        self.file_content_processor = FileContentConverter(empty_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
         self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
     def test_Should_GetEmptyContent_When_GivenHeaderOnlyContent(self, mock_get):
-        self.file_content_processor = FileContentProcessor(header_only_response['url'])
+        self.file_content_processor = FileContentConverter(header_only_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
         self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
     def test_Should_GetNonemptyContent_When_GivenNonemptyRawContent(self, mock_get):
-        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
+        self.file_content_processor = FileContentConverter(nonempty_response['url'])
         wait_monitoring_interval_time_with_buffer()
 
         self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
     def test_Should_GetEmptyContent_When_GivenEmptyRawContentBecomesHeaderOnly(self, mock_get):
-        self.file_content_processor = FileContentProcessor(empty_response['url'])
+        self.file_content_processor = FileContentConverter(empty_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = header_only_response['url']
         wait_monitoring_interval_time_with_buffer()
@@ -93,7 +93,7 @@ class TestFileContentConverter(unittest.TestCase):
         self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
     def test_Should_GetNonemptyContent_When_GivenHeaderOnlyRawContentBecomesNonempty(self, mock_get):
-        self.file_content_processor = FileContentProcessor(header_only_response['url'])
+        self.file_content_processor = FileContentConverter(header_only_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = nonempty_response['url']
         wait_monitoring_interval_time_with_buffer()
@@ -101,7 +101,7 @@ class TestFileContentConverter(unittest.TestCase):
         self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
     def test_Should_GetNonemptyContent_When_GivenEmptyRawContentBecomesNonempty(self, mock_get):
-        self.file_content_processor = FileContentProcessor(empty_response['url'])
+        self.file_content_processor = FileContentConverter(empty_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = nonempty_response['url']
         wait_monitoring_interval_time_with_buffer()
@@ -109,7 +109,7 @@ class TestFileContentConverter(unittest.TestCase):
         self.assertEqual(self.expected_nonempty_content, self.file_content_processor.content)
 
     def test_Should_GetEmptyContent_When_GivenNonemptyRawContentBecomesHeaderOnly(self, mock_get):
-        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
+        self.file_content_processor = FileContentConverter(nonempty_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = header_only_response['url']
         wait_monitoring_interval_time_with_buffer()
@@ -117,7 +117,7 @@ class TestFileContentConverter(unittest.TestCase):
         self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
     def test_Should_GetEmptyContent_When_GivenHeaderOnlyRawContentBecomesEmpty(self, mock_get):
-        self.file_content_processor = FileContentProcessor(header_only_response['url'])
+        self.file_content_processor = FileContentConverter(header_only_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = empty_response['url']
         wait_monitoring_interval_time_with_buffer()
@@ -125,7 +125,7 @@ class TestFileContentConverter(unittest.TestCase):
         self.assertEqual(self.expected_empty_content, self.file_content_processor.content)
 
     def test_Should_GetEmptyContent_When_GivenNonemptyRawContentBecomesEmpty(self, mock_get):
-        self.file_content_processor = FileContentProcessor(nonempty_response['url'])
+        self.file_content_processor = FileContentConverter(nonempty_response['url'])
         wait_monitoring_interval_time_with_buffer()
         self.file_content_processor.url = empty_response['url']
         wait_monitoring_interval_time_with_buffer()

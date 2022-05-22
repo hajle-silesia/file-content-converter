@@ -8,7 +8,7 @@ import requests
 from src.converter import factory
 
 
-class FileContentProcessor(threading.Thread):
+class FileContentConverter(threading.Thread):
     _content_default = {}
 
     def __init__(self, url):
