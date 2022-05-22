@@ -5,7 +5,7 @@ from time import sleep
 import magic
 import requests
 
-from app.src.converter import factory
+from src.converter import factory
 
 
 class FileContentProcessor(threading.Thread):
