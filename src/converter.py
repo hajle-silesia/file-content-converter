@@ -3,7 +3,7 @@ from xml.parsers.expat import ExpatError
 
 import xmltodict
 
-from app.src.object_factory import ObjectFactory
+from src.object_factory import ObjectFactory
 
 
 class Converter(ABC):

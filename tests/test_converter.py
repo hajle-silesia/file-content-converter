@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from app.src.converter import XMLConverter
+from src.converter import XMLConverter
 
 
 class TestConverter(unittest.TestCase):

@@ -4,7 +4,7 @@ from pathlib import Path
 from time import sleep
 from unittest import mock
 
-from app.src.file_content_processor import FileContentProcessor
+from src.file_content_processor import FileContentProcessor
 
 with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
     xml_content = file.read()
@@ -40,7 +40,7 @@ def mocked_requests_get(*args, **kwargs):
         return MockResponse(None, 404)
 
 
-@mock.patch('app.src.file_content_processor.requests.get', side_effect=mocked_requests_get)
+@mock.patch('src.file_content_processor.requests.get', side_effect=mocked_requests_get)
 class TestFileContentConverter(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

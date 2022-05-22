@@ -4,7 +4,7 @@ import json
 
 from fastapi import FastAPI
 
-from file_content_processor import FileContentProcessor
+from src.file_content_processor import FileContentProcessor
 
 
 api = FastAPI()
