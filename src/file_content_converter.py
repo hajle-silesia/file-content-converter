@@ -9,6 +9,7 @@ from src.converter import factory
 
 
 class FileContentConverter(threading.Thread):
+    _raw_content_default = ""
     _content_default = {}
 
     def __init__(self, url):
@@ -18,7 +19,7 @@ class FileContentConverter(threading.Thread):
         self.__url = url
 
         self.__response = None
-        self.__raw_content = ""
+        self.__raw_content = self._raw_content_default
         self.__content = self._content_default
 
         self. start()
@@ -62,7 +63,7 @@ class FileContentConverter(threading.Thread):
         if self.__response.status_code == 200:
             self.__new_raw_content = base64.b64decode(self.__response.json()['content']).decode()
         else:
-            self.__new_raw_content = ""
+            self.__new_raw_content = self._raw_content_default
 
     def __update_raw_content(self):
         self.__raw_content = self.__new_raw_content
