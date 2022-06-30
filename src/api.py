@@ -1,20 +1,39 @@
 import base64
+import json
 import os
+from pathlib import Path
 
+import requests
 from fastapi import FastAPI, Request
 
 from src.file_content_converter import FileContentConverter
+from src.notifier import Notifier
+from src.storage import Storage
+
+config_path = Path(__file__).parent / "../file_content_converter/config.json"
 
 app = FastAPI()
-host = os.getenv('FRONTEND_SERVICE_HOST')
-port = os.getenv('FRONTEND_SERVICE_PORT')
+
+storage = Storage()
+storage.path = config_path
+notifier = Notifier(storage)
+file_content_converter = FileContentConverter(notifier)
+
+notifier_host = os.getenv('FILE_CONTENT_MONITOR_SERVICE_HOST')
+notifier_port = os.getenv('FILE_CONTENT_MONITOR_SERVICE_PORT')
+notifier_url = f"http://{notifier_host}:{notifier_port}/observers/register"
+
+host = os.getenv('FILE_CONTENT_CONVERTER_SERVICE_HOST')
+port = os.getenv('FILE_CONTENT_CONVERTER_SERVICE_PORT')
 url = f"http://{host}:{port}/update"
-file_content_converter = FileContentConverter(url)
+
+requests.post(notifier_url, base64.b64encode(json.dumps({'file-content-converter': url}).encode()))
 
 
 @app.get("/api")
 async def api():
     return {"/content",
+            "/update",
             }
 
 
@@ -26,5 +45,6 @@ async def content():
 
 @app.post("/update")
 async def update(request: Request):
-    request_body = base64.b64decode(await request.body()).decode()
+    request_body_json = base64.b64decode(await request.body()).decode()
+    request_body = json.loads(request_body_json)
     file_content_converter.update(request_body)
