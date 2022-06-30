@@ -43,6 +43,25 @@ async def content():
             }
 
 
+@app.get("/observers")
+async def observers():
+    return notifier.observers
+
+
+@app.post("/observers/register")
+async def observers_register(request: Request):
+    request_body_json = base64.b64decode(await request.body()).decode()
+    request_body = json.loads(request_body_json)
+    notifier.register_observer(request_body)
+
+
+@app.post("/observers/remove")
+async def observers_remove(request: Request):
+    request_body_json = base64.b64decode(await request.body()).decode()
+    request_body = json.loads(request_body_json)
+    notifier.remove_observer(request_body)
+
+
 @app.post("/update")
 async def update(request: Request):
     request_body_json = base64.b64decode(await request.body()).decode()
