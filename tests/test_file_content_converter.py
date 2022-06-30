@@ -2,9 +2,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from miscs import remove_file
 from src.file_content_converter import FileContentConverter
+from src.notifier import Notifier
+from src.storage import Storage
 
-url = "http://subscriber/update"
+url = {'observer': "http://observer/update"}
 
 
 def mocked_requests_post(*args, **kwargs):
@@ -16,14 +19,18 @@ def mocked_requests_post(*args, **kwargs):
         def json(self):
             return self.json_data
 
-    if args[0] == url:
+    if args[0] in url.values():
         return MockResponse(None, 204)
     else:
         return MockResponse(None, 404)
 
 
-@mock.patch("src.file_content_converter.requests.post", side_effect=mocked_requests_post)
+@mock.patch("src.notifier.requests.post", side_effect=mocked_requests_post)
 class TestFileContentConverter(unittest.TestCase):
+    storage = None
+    storage_path = None
+    notifier = None
+
     @classmethod
     def setUpClass(cls):
         cls.set_test_arguments()
@@ -33,10 +40,15 @@ class TestFileContentConverter(unittest.TestCase):
     @classmethod
     def set_test_arguments(cls):
         cls.nonempty_content = "test_content"
-
         cls.xml_header_only_raw_content = "<?xml version='1.0' encoding='UTF-8'?>"
         with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
             cls.xml_nonempty_raw_content = file.read()
+
+        cls.storage = Storage()
+        cls.storage_path = Path(__file__).parent / "./data.json"
+        cls.storage.path = cls.storage_path
+        cls.notifier = Notifier(cls.storage)
+        cls.notifier.register_observer(url)
 
     @classmethod
     def set_tested_objects(cls):
@@ -54,153 +66,145 @@ class TestFileContentConverter(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.file_content_converter = FileContentConverter(url)
+        self.file_content_converter = FileContentConverter(self.notifier)
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+
+        remove_file(cls.storage_path)
 
     def test_Should_GetEmptyContent_When_GivenNoneRawContent(self, mock_get):
         self.file_content_converter.update(None)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetEmptyContent_When_NoneRawContentBecomesEmptyRawContent(self, mock_get):
         self.file_content_converter.update(None)
         self.file_content_converter.update("")
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetEmptyContent_When_GivenEmptyRawContent(self, mock_get):
         self.file_content_converter.update("")
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_EmptyRawContentBecomesNonemptyRawContent(self, mock_get):
         self.file_content_converter.update("")
         self.file_content_converter.update(self.nonempty_content)
 
         self.assertEqual(self.nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetContent_When_GivenNonemptyRawContent(self, mock_get):
         self.file_content_converter.update(self.nonempty_content)
 
         self.assertEqual(self.nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetContent_When_NoneRawContentBecomesNonemptyRawContent(self, mock_get):
         self.file_content_converter.update(None)
         self.file_content_converter.update(self.nonempty_content)
 
         self.assertEqual(self.nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetContent_When_NonemptyRawContentBecomesEmptyRawContent(self, mock_get):
         self.file_content_converter.update(self.nonempty_content)
         self.file_content_converter.update("")
 
         self.assertEqual(self.nonempty_content, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetEmptyContent_When_EmptyRawContentBecomesNoneRawContent(self, mock_get):
         self.file_content_converter.update("")
         self.file_content_converter.update(None)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_NonemptyRawContentBecomesNoneRawContent(self, mock_get):
         self.file_content_converter.update(self.nonempty_content)
         self.file_content_converter.update(None)
 
         self.assertEqual(self.nonempty_content, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetEmptyContent_When_EmptyRawContentBecomesXMLHeaderOnlyRawContent(self, mock_get):
         self.file_content_converter.update("")
         self.file_content_converter.update(self.xml_header_only_raw_content)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_EmptyRawContentBecomesXMLNonemptyRawContent(self, mock_get):
         self.file_content_converter.update("")
         self.file_content_converter.update(self.xml_nonempty_raw_content)
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetEmptyContent_When_GivenXMLHeaderOnlyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_header_only_raw_content)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_GivenXMLNonemptyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_nonempty_raw_content)
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetEmptyContent_When_NoneRawContentBecomesXMLHeaderOnlyRawContent(self, mock_get):
         self.file_content_converter.update(None)
         self.file_content_converter.update(self.xml_header_only_raw_content)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_NoneRawContentBecomesXMLNonemptyRawContent(self, mock_get):
         self.file_content_converter.update(None)
         self.file_content_converter.update(self.xml_nonempty_raw_content)
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetContent_When_XMLHeaderOnlyRawContentBecomesXMLNonemptyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_header_only_raw_content)
         self.file_content_converter.update(self.xml_nonempty_raw_content)
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(204, self.file_content_converter.response.status_code)
-        self.assertEqual(None, self.file_content_converter.response.json())
+        self.assertEqual(204, self.notifier.responses[0].status_code)
+        self.assertEqual(None, self.notifier.responses[0].json())
 
     def test_Should_GetContent_When_XMLNonemptyRawContentBecomesXMLHeaderOnlyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_nonempty_raw_content)
         self.file_content_converter.update(self.xml_header_only_raw_content)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_XMLHeaderOnlyRawContentBecomesEmptyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_header_only_raw_content)
         self.file_content_converter.update("")
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_XMLNonemptyRawContentBecomesEmptyRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_nonempty_raw_content)
         self.file_content_converter.update("")
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_XMLHeaderOnlyRawContentBecomesNoneRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_header_only_raw_content)
         self.file_content_converter.update(None)
 
         self.assertEqual({}, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
 
     def test_Should_GetContent_When_XMLNonemptyRawContentBecomesNoneRawContent(self, mock_get):
         self.file_content_converter.update(self.xml_nonempty_raw_content)
         self.file_content_converter.update(None)
 
         self.assertEqual(self.expected_xml_nonempty_content, self.file_content_converter.content)
-        self.assertEqual(None, self.file_content_converter.response)
