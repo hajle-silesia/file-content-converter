@@ -30,7 +30,7 @@ class XMLConverter(Converter):
 
     def __parse(self, raw_content):
         try:
-            self._content = xmltodict.parse(raw_content)
+            self._content = xmltodict.parse(raw_content, force_list=('HOP', 'MISC', 'FERMENTABLE', 'MASH_STEP',))
         except ExpatError:
             self._content = self._content_default
 
