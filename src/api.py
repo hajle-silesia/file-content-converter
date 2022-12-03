@@ -1,22 +1,22 @@
 import base64
 import json
 import os
-from pathlib import Path
+import pathlib
 
+import common.notifier
+import common.storage
+import fastapi
 import requests
-from fastapi import FastAPI, Request
 
 from src.file_content_converter import FileContentConverter
-from src.notifier import Notifier
-from src.storage import Storage
 
-config_path = Path(__file__).parent / "../file_content_converter/config.json"
+config_path = pathlib.Path(__file__).parent / "../file_content_converter/config.json"
 
-app = FastAPI()
+app = fastapi.FastAPI()
 
-storage = Storage()
+storage = common.storage.Storage()
 storage.path = config_path
-notifier = Notifier(storage)
+notifier = common.notifier.Notifier(storage)
 file_content_converter = FileContentConverter(notifier)
 
 notifier_host = os.getenv('FILE_CONTENT_MONITOR_SERVICE_HOST')
@@ -54,21 +54,21 @@ async def observers():
 
 
 @app.post("/observers/register")
-async def observers_register(request: Request):
+async def observers_register(request: fastapi.Request):
     request_body_json = base64.b64decode(await request.body()).decode()
     request_body = json.loads(request_body_json)
     notifier.register_observer(request_body)
 
 
 @app.post("/observers/remove")
-async def observers_remove(request: Request):
+async def observers_remove(request: fastapi.Request):
     request_body_json = base64.b64decode(await request.body()).decode()
     request_body = json.loads(request_body_json)
     notifier.remove_observer(request_body)
 
 
 @app.post("/update")
-async def update(request: Request):
+async def update(request: fastapi.Request):
     request_body_json = base64.b64decode(await request.body()).decode()
     request_body = json.loads(request_body_json)
     file_content_converter.update(request_body)

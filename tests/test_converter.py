@@ -1,5 +1,5 @@
+import pathlib
 import unittest
-from pathlib import Path
 
 from src.converter import XMLConverter
 
@@ -15,7 +15,7 @@ class TestConverter(unittest.TestCase):
     def set_test_arguments(cls):
         cls.empty_raw_content = ""
         cls.header_only_raw_content = "<?xml version='1.0' encoding='UTF-8'?>"
-        with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
+        with open(pathlib.Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
             cls.nonempty_raw_content = file.read()
 
     @classmethod

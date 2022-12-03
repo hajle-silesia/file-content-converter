@@ -1,12 +1,12 @@
-from abc import ABC, abstractmethod
-from xml.parsers.expat import ExpatError
+import abc
+import xml.parsers.expat
 
 import xmltodict
 
 from src.object_factory import ObjectFactory
 
 
-class Converter(ABC):
+class Converter(abc.ABC):
     _content_default = {}
 
     def __init__(self):
@@ -16,7 +16,7 @@ class Converter(ABC):
     def content(self):
         return self._content
 
-    @abstractmethod
+    @abc.abstractmethod
     def process(self, raw_content):
         pass
 
@@ -31,7 +31,7 @@ class XMLConverter(Converter):
     def __parse(self, raw_content):
         try:
             self._content = xmltodict.parse(raw_content, force_list=('HOP', 'MISC', 'FERMENTABLE', 'MASH_STEP',))
-        except ExpatError:
+        except xml.parsers.expat.ExpatError:
             self._content = self._content_default
 
 

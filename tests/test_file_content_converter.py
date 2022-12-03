@@ -1,11 +1,11 @@
-import unittest
-from pathlib import Path
-from unittest import mock
+import pathlib
+import unittest.mock
 
-from miscs import remove_file
+import common.notifier
+import common.storage
+import common.utils
+
 from src.file_content_converter import FileContentConverter
-from src.notifier import Notifier
-from src.storage import Storage
 
 url = {'observer': "http://observer/update"}
 
@@ -25,7 +25,7 @@ def mocked_requests_post(*args, **kwargs):
         return MockResponse(None, 404)
 
 
-@mock.patch("src.notifier.requests.post", side_effect=mocked_requests_post)
+@unittest.mock.patch("common.notifier.requests.post", side_effect=mocked_requests_post)
 class TestFileContentConverter(unittest.TestCase):
     storage = None
     storage_path = None
@@ -41,13 +41,13 @@ class TestFileContentConverter(unittest.TestCase):
     def set_test_arguments(cls):
         cls.nonempty_content = "test_content"
         cls.xml_header_only_raw_content = "<?xml version='1.0' encoding='UTF-8'?>"
-        with open(Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
+        with open(pathlib.Path(__file__).parent / "./files/converter.xml", encoding="utf-8") as file:
             cls.xml_nonempty_raw_content = file.read()
 
-        cls.storage = Storage()
-        cls.storage_path = Path(__file__).parent / "./data.json"
+        cls.storage = common.storage.Storage()
+        cls.storage_path = pathlib.Path(__file__).parent / "./data.json"
         cls.storage.path = cls.storage_path
-        cls.notifier = Notifier(cls.storage)
+        cls.notifier = common.notifier.Notifier(cls.storage)
         cls.notifier.register_observer(url)
 
     @classmethod
@@ -72,7 +72,7 @@ class TestFileContentConverter(unittest.TestCase):
     def tearDownClass(cls):
         super().tearDownClass()
 
-        remove_file(cls.storage_path)
+        common.utils.remove_file(cls.storage_path)
 
     def test_Should_GetEmptyContent_When_GivenNoneRawContent(self, mock_get):
         self.file_content_converter.update(None)
