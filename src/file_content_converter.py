@@ -1,18 +1,14 @@
-import threading
-
 import magic
 
 from src.converter import factory
 
 
-class FileContentConverter(threading.Thread):
+class FileContentConverter:
     _raw_content_default = ""
     _content_default = {}
 
-    def __init__(self, notifier):
-        threading.Thread.__init__(self, daemon=True)
-
-        self.__notifier = notifier
+    def __init__(self, producer):
+        self.__producer = producer
 
         self.__raw_content = self._raw_content_default
         self.__content = self._content_default
@@ -22,10 +18,9 @@ class FileContentConverter(threading.Thread):
         return self.__content
 
     def update(self, new_raw_content):
-        if new_raw_content:
-            self.__update_raw_content(new_raw_content)
-            self.__process_raw_content()
-            self.__notify()
+        self.__update_raw_content(new_raw_content)
+        self.__process_raw_content()
+        self.__notify()
 
     def __update_raw_content(self, new_raw_content):
         self.__raw_content = new_raw_content
@@ -51,4 +46,6 @@ class FileContentConverter(threading.Thread):
 
     def __notify(self):
         if self.content:
-            self.__notifier.notify_observers(self.content)
+            self.__producer.send(topic="file-content-converter-topic",
+                                 value=self.content,
+                                 )
