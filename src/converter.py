@@ -1,4 +1,5 @@
 import abc
+import typing
 import xml.parsers.expat
 
 import xmltodict
@@ -7,7 +8,7 @@ from src.object_factory import ObjectFactory
 
 
 class Converter(abc.ABC):
-    _content_default = {}
+    _content_default: typing.ClassVar = {}
 
     def __init__(self):
         self._content = self._content_default
@@ -30,11 +31,19 @@ class XMLConverter(Converter):
 
     def __parse(self, raw_content):
         try:
-            self._content = xmltodict.parse(raw_content, force_list=('HOP', 'MISC', 'FERMENTABLE', 'MASH_STEP',))
+            self._content = xmltodict.parse(
+                raw_content,
+                force_list=(
+                    "HOP",
+                    "MISC",
+                    "FERMENTABLE",
+                    "MASH_STEP",
+                ),
+            )
         except xml.parsers.expat.ExpatError:
             self._content = self._content_default
 
 
 factory = ObjectFactory()
 
-factory.register_builder('xml', XMLConverter)
+factory.register_builder("xml", XMLConverter)
