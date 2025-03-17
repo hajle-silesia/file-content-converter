@@ -1,3 +1,5 @@
+import typing
+
 import magic
 
 from src.converter import factory
@@ -5,7 +7,7 @@ from src.converter import factory
 
 class FileContentConverter:
     _raw_content_default = ""
-    _content_default = {}
+    _content_default: typing.ClassVar = {}
 
     def __init__(self, producer):
         self.__producer = producer
@@ -46,6 +48,7 @@ class FileContentConverter:
 
     def __notify(self):
         if self.content:
-            self.__producer.send(topic="file-content-converter-topic",
-                                 value=self.content,
-                                 )
+            self.__producer.send(
+                topic="file-content-converter-topic",
+                value=self.content,
+            )

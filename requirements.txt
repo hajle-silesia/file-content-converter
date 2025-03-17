@@ -1,8 +1,6 @@
-fastapi
-uvicorn
-requests
-xmltodict
-python-magic-bin; platform_system == "Windows"
-python-magic; platform_system == "Linux"
-https://github.com/hajle-silesia/common/zipball/master
-kafka-python
+fastapi==0.115.11
+kafka-python==2.1.1
+python-magic==0.4.27
+requests==2.32.3
+xmltodict==0.14.2
+uvicorn==0.34.0
