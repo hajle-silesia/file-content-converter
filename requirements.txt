@@ -1,6 +1,6 @@
 fastapi==0.115.12
 kafka-python==2.2.11
 python-magic==0.4.27
-requests==2.32.3
+requests==2.32.4
 xmltodict==0.14.2
 uvicorn==0.34.3
