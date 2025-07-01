@@ -1,5 +1,5 @@
 fastapi==0.115.14
-kafka-python==2.2.14
+kafka-python==2.2.15
 python-magic==0.4.27
 requests==2.32.4
 xmltodict==0.14.2
